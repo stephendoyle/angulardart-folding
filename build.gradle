@@ -1,0 +1,29 @@
+plugins {
+    id "org.jetbrains.intellij" version "0.3.2"
+    id "org.jetbrains.kotlin.jvm" version "1.2.41"
+}
+
+group 'com.volitic'
+version '1.0.0'
+
+sourceCompatibility = 1.8
+
+
+repositories {
+    mavenCentral()
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+intellij {
+    version '2018.1.4'
+    pluginName 'AngularDart Folding'
+}
+patchPluginXml {
+    changeNotes "Initial Release"
+    sinceBuild '171.0'
+}
