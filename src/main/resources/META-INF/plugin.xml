@@ -1,26 +1,15 @@
 <idea-plugin>
-    <id>com.volitic.plugin.ngdartfolding</id>
-    <name>AngularDart Folding</name>
-    <vendor url="http://www.volitic.com"/>
-
-    <description><![CDATA[
-      A plugin for WebStorm, PhpStorm and friends that folds AngularDart components in the project file tree with their
-      respective supporting files. For example foo_component.html and foo_component.css will be folded into a group
-      under foo_component.dart.
-    ]]></description>
-
-    <change-notes><![CDATA[
-        Initial Commit
-    ]]></change-notes>
-
-    <idea-version since-build="171.0"/>
-
-    <depends>com.intellij.modules.platform</depends>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <treeStructureProvider implementation="com.volitic.plugin.ngdartfolding.TreeStructureProvider"/>
-    </extensions>
-
-    <actions>
-    </actions>
+  <id>com.volitic.plugin.ngdartfolding</id>
+  <name>AngularDart Folding</name>
+  <vendor url="https://www.volitic.com"/>
+  <description>
+    A plugin that folds AngularDart components in the project file tree with their respective supporting files. For
+    example foo_component.html and foo_component.css will be folded into a group under foo_component.dart.
+  </description>
+  <idea-version since-build="161.0"/>
+  <depends>com.intellij.modules.platform</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <treeStructureProvider implementation="com.volitic.plugin.ngdartfolding.TreeStructureProvider"/>
+  </extensions>
+  <actions/>
 </idea-plugin>
