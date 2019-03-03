@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test
 
 internal class FileIdTest {
 
-    private val psiFile: PsiFile = mockk()
-    private val treeNode: AbstractTreeNode<Any> = mockk()
+    private val fileMock: PsiFile = mockk()
+    private val nodeMock: AbstractTreeNode<Any> = mockk()
 
     @BeforeEach
     internal fun setUp() {
@@ -20,42 +20,82 @@ internal class FileIdTest {
     }
 
     @Test
-    fun isNgType() {
+    fun isComponent() {
 
-        every { treeNode.value } returns null
-        assertFalse(FileId.isNgType(treeNode), "should return false if node is null")
+        missingNameMustFail(FileId::isComponent)
+        useMockFileForNode()
 
-        every { treeNode.value } returns psiFile
+        every { fileMock.name } returns "nondescript.file"
+        assertFalse(FileId.isComponent(nodeMock), "Unrelated file should return false")
 
-        every { psiFile.name } returns ""
-        assertFalse(FileId.isNgType(treeNode), "should return false if name is empty")
+        every { fileMock.name } returns "something_component.sass"
+        assertFalse(FileId.isComponent(nodeMock), "Component supporting files should return false")
 
-        every { psiFile.name } returns "nondescript.file"
-        assertFalse(FileId.isNgType(treeNode), "should return false if file name is non-angular")
+        every { fileMock.name } returns "something_component.dart"
+        assertTrue(FileId.isComponent(nodeMock), "Component file should return true")
+    }
 
-        every { psiFile.name } returns "something_component.dart"
-        assertTrue(FileId.isNgType(treeNode), "component file should return true")
+    @Test
+    fun isComponentAssoc() {
 
-        every { psiFile.name } returns "something_component.sass"
-        assertTrue(FileId.isNgType(treeNode), "component supporting file should return true")
+        missingNameMustFail(FileId::isComponentAssoc)
+        useMockFileForNode()
+
+        every { fileMock.name } returns "nondescript.file"
+        assertFalse(FileId.isComponent(nodeMock), "Unrelated file should return false")
+
+        every { fileMock.name } returns "something_component.dart"
+        assertFalse(FileId.isComponentAssoc(nodeMock), "Component file should return false")
+
+        every { fileMock.name } returns "something_component.sass"
+        assertTrue(FileId.isComponentAssoc(nodeMock), "Component supporting files should return true")
     }
 
     @Test
     fun isDartFile() {
 
-        every { treeNode.value } returns null
-        assertFalse(FileId.isDartFile(treeNode), "should return false if node is null")
+        every { nodeMock.value } returns null
+        assertFalse(FileId.isDartFile(nodeMock), "Should return false if node file is null")
 
-        every { treeNode.value } returns psiFile
+        useMockFileForNode()
 
-        every { psiFile.name } returns ""
-        assertFalse(FileId.isDartFile(treeNode), "should return false if name is empty")
+        every { fileMock.name } returns ""
+        assertFalse(FileId.isDartFile(nodeMock), "Should return false if name is absent")
+        useMockFileForNode()
 
-        every { psiFile.name } returns "not_a_dart.file"
-        assertFalse(FileId.isDartFile(treeNode), "should return false if file name is not a dart file")
+        every { fileMock.name } returns "not_a_dart.file"
+        assertFalse(FileId.isDartFile(nodeMock), "Non-Dart file should return false")
 
-        every { psiFile.name } returns "is_a.dart"
-        assertTrue(FileId.isDartFile(treeNode), "should return true if file is a dart file")
+        every { fileMock.name } returns "is_a.dart"
+        assertTrue(FileId.isDartFile(nodeMock), "Dart file should return true")
+
+        every { fileMock.name } returns "generated.g.dart"
+        assertTrue(FileId.isDartFile(nodeMock), "Generated Dart file should return true in non-strict mode")
+
+        every { fileMock.name } returns "generated.g.dart"
+        assertFalse(
+            FileId.isDartFile(nodeMock, strict = true), "Generated Dart file should return false in strict mode"
+        )
+    }
+
+    @Test
+    fun isGeneratedDartFile(){
+
+        missingNameMustFail(FileId::isGeneratedDartFile)
+        useMockFileForNode()
+
+        every { fileMock.name } returns "is_a.dart"
+        assertFalse(FileId.isGeneratedDartFile(nodeMock), "Regular Dart file should return false")
+
+        every { fileMock.name } returns "generated.g.dart"
+        assertTrue(FileId.isGeneratedDartFile(nodeMock), "Generated Dart file should return true")
+
+        every { fileMock.name } returns "unrelated-to-anything.txt"
+        assertFalse(
+            FileId.isGeneratedDartFile(nodeMock), "Unrelated file should return false"
+        )
+
+
     }
 
     @Test
@@ -66,14 +106,36 @@ internal class FileIdTest {
             arrayOf("filename_component.dart", "filename_component"),
             arrayOf("filename-component.sass", "filename-component"),
             arrayOf("filename.component.tar.gz", "filename.component"),
-            arrayOf("", "")
+            arrayOf("", ""),
+            arrayOf("filename.dart", "filename"),
+            arrayOf("filename.g.dart", "filename"),
+            arrayOf("complicated.file.name.dart", "complicated.file.name")
         )
 
-        every { treeNode.value } returns psiFile
+        every { nodeMock.value } returns fileMock
 
         testValues.forEach {
-            every { psiFile.name } returns it[0]
-            kotlin.test.assertEquals(it[1], FileId.getIdentifier(treeNode), "should return filename without extension")
+            every { fileMock.name } returns it[0]
+            kotlin.test.assertEquals(
+                it[1],
+                FileId.getIdentifier(nodeMock),
+                "should return filename without extension"
+            )
         }
+    }
+
+    private fun missingNameMustFail( call: (n: AbstractTreeNode<*>) -> Boolean) {
+
+        every { nodeMock.value } returns null
+        assertFalse(call(nodeMock), "should return false if node is null")
+
+        useMockFileForNode()
+
+        every { fileMock.name } returns ""
+        assertFalse(call(nodeMock), "should return false if name is empty")
+    }
+
+    private fun useMockFileForNode() {
+        every { nodeMock.value } returns fileMock
     }
 }

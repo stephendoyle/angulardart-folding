@@ -5,8 +5,9 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 
 /**
- * TreeStructureProvider is where actual modifications to the project Tree happen. Component dart files are identified
- * along with any other files related to that component, and they are moved into their own group.
+ * TreeStructureProvider is where actual modifications to the project tree happen. Component dart files and their
+ * associated supporting files are identified grouped together. The same is done for Dart files and their related
+ * .g.dart part files.
  */
 class TreeStructureProvider : com.intellij.ide.projectView.TreeStructureProvider {
 
@@ -15,20 +16,23 @@ class TreeStructureProvider : com.intellij.ide.projectView.TreeStructureProvider
                         viewSettings: ViewSettings): Collection<AbstractTreeNode<*>> {
 
 
-        val groups = HashMap<String, NgDartGroup>()
+        val groups = HashMap<String, FoldingGroup>()
         val ngRelated = ArrayList<PsiFileNode>()
         val childrenProcessed = ArrayList<AbstractTreeNode<*>>()
 
         children.forEach { node ->
-            if (node is PsiFileNode
-                    && FileId.isNgType(node)) {
+            if (node is PsiFileNode){
 
-                if (FileId.isDartFile(node)) {
+                if( FileId.isComponentAssoc(node) || FileId.isGeneratedDartFile(node)){
+                    ngRelated.add(node)
+
+                } else if(FileId.isDartFile(node, strict = true)){
+
                     val id = FileId.getIdentifier(node)
-                    groups[id] = NgDartGroup(node) // create an NgDartGroup for this component
+                    groups[id] = FoldingGroup(node) // create an FoldingGroup for this file
 
                 } else {
-                    ngRelated.add(node)
+                    childrenProcessed.add(node)
                 }
             } else {
                 childrenProcessed.add(node)
@@ -40,7 +44,7 @@ class TreeStructureProvider : com.intellij.ide.projectView.TreeStructureProvider
             group?.addRelated(related) ?: childrenProcessed.add(related)
         }
 
-        groups.forEach { _, group -> childrenProcessed.add(group.build()) }
+        groups.forEach { _, group -> childrenProcessed.add( group.build()) }
 
         return childrenProcessed
     }
